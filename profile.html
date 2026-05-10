@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Schola — Profile</title>
+  <link rel="stylesheet" href="css/schola.css">
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <style>
+    .profile-header {
+      background: linear-gradient(160deg, #1A1F36 0%, #2d3561 100%);
+      padding: 40px 20px 28px; color: #fff; text-align: center;
+    }
+    .avatar {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: linear-gradient(135deg, #4F46E5, #818cf8);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 30px; font-weight: 800; color: #fff;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      margin: 0 auto 14px;
+      border: 3px solid rgba(255,255,255,0.2);
+    }
+    .stat-row {
+      display: flex; justify-content: center; gap: 0;
+      border-top: 1px solid rgba(255,255,255,0.1); margin-top: 20px;
+    }
+    .stat-item {
+      flex: 1; padding: 14px 8px; text-align: center;
+      border-right: 1px solid rgba(255,255,255,0.1);
+    }
+    .stat-item:last-child { border-right: none; }
+    .stat-val { font-size: 22px; font-weight: 800; font-family: 'Plus Jakarta Sans', sans-serif; }
+    .stat-lbl { font-size: 11px; opacity: 0.5; margin-top: 2px; }
+
+    .schola-card {
+      background: linear-gradient(135deg, #1A1F36, #2d3561);
+      border-radius: 20px; padding: 20px; color: #fff; margin-bottom: 16px;
+      position: relative; overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .schola-card::before {
+      content: ''; position: absolute; width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(79,70,229,0.3) 0%, transparent 70%);
+      top: -60px; right: -40px;
+    }
+    .rank-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(79,70,229,0.3); border: 1px solid rgba(79,70,229,0.5);
+      border-radius: 20px; padding: 4px 12px; font-size: 12px;
+      font-weight: 700; color: #818cf8;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .menu-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 16px; background: #fff; border-radius: 14px;
+      margin-bottom: 8px; cursor: pointer;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+      text-decoration: none; color: var(--text);
+      transition: transform 0.12s;
+    }
+    .menu-item:active { transform: scale(0.98); }
+    .menu-icon {
+      width: 38px; height: 38px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .menu-label { font-size: 14px; font-weight: 600; flex: 1; }
+    .badge-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .badge-item {
+      background: #fff; border-radius: 12px; padding: 12px 8px;
+      text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .badge-emoji { font-size: 24px; margin-bottom: 4px; }
+    .badge-name  { font-size: 10px; color: #64748B; font-weight: 600; line-height: 1.3; }
+    .badge-item.locked { opacity: 0.35; }
+
+    .pro-card {
+      background: linear-gradient(135deg, #4F46E5, #7C3AED);
+      border-radius: 16px; padding: 20px; color: #fff; margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- PROFILE HEADER -->
+  <div class="profile-header">
+    <div class="avatar" id="avatar-initials">J</div>
+    <h2 style="font-size:20px;font-weight:800;margin-bottom:4px;" id="profile-name">Loading...</h2>
+    <p style="font-size:13px;opacity:0.6;margin-bottom:8px;" id="profile-dept">Department · Level</p>
+    <p style="font-size:12px;opacity:0.4;font-family:monospace;" id="profile-mat">MAT NUMBER</p>
+
+    <div class="stat-row">
+      <div class="stat-item">
+        <div class="stat-val" id="stat-sessions">0</div>
+        <div class="stat-lbl">Sessions</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-val" id="stat-streak">🔥0</div>
+        <div class="stat-lbl">Streak</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-val" id="stat-paid">₦0</div>
+        <div class="stat-lbl">Paid</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content" style="padding-top:16px;">
+
+    <!-- SCHOLA CARD -->
+    <div class="schola-card anim-fade-up d1">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;">
+        <div>
+          <p style="font-size:11px;opacity:0.5;margin-bottom:4px;">SCHOLA RANK</p>
+          <div class="rank-badge" id="rank-badge">⭐ Scholar</div>
+        </div>
+        <div style="text-align:right;font-size:11px;opacity:0.4;">
+          <div>Schola ID</div>
+          <div style="font-family:monospace;font-size:13px;color:rgba(255,255,255,0.7);" id="schola-id">SCH-0000</div>
+        </div>
+      </div>
+      <div style="margin-bottom:16px;">
+        <div style="font-size:17px;font-weight:800;" id="card-name">Name</div>
+        <div style="font-size:12px;opacity:0.6;" id="card-dept">Dept · Level · Mat</div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:11px;opacity:0.4;">2024/2025 Session</span>
+        <button onclick="shareCard()"
+          style="background:rgba(255,255,255,0.15);border:none;border-radius:8px;
+          padding:6px 14px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;
+          font-family:'Plus Jakarta Sans',sans-serif;">
+          Share Card 📲
+        </button>
+      </div>
+    </div>
+
+    <!-- PRO CARD (if free user) -->
+    <div class="pro-card anim-fade-up d2" id="pro-card">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <div style="font-size:28px;">⚡</div>
+        <div>
+          <div style="font-size:16px;font-weight:800;">Upgrade to Pro</div>
+          <div style="font-size:12px;opacity:0.8;">Unlimited AI · Advanced features</div>
+        </div>
+      </div>
+      <div style="font-size:13px;opacity:0.8;margin-bottom:16px;line-height:1.5;">
+        You are using <span id="quota-used">0</span> of 30 free AI messages this month.
+      </div>
+      <button class="btn" style="background:#fff;color:#4F46E5;border-radius:10px;padding:12px;">
+        Get Pro — ₦1,500/month
+      </button>
+    </div>
+
+    <!-- BADGES -->
+    <div class="section-title anim-fade-up d3">Your Badges</div>
+    <div class="badge-grid anim-fade-up d4" style="margin-bottom:20px;">
+      <div class="badge-item">
+        <div class="badge-emoji">🔥</div>
+        <div class="badge-name">Iron Studier</div>
+      </div>
+      <div class="badge-item locked">
+        <div class="badge-emoji">📚</div>
+        <div class="badge-name">Contributor</div>
+      </div>
+      <div class="badge-item locked">
+        <div class="badge-emoji">✅</div>
+        <div class="badge-name">Fully Cleared</div>
+      </div>
+      <div class="badge-item locked">
+        <div class="badge-emoji">🏆</div>
+        <div class="badge-name">Top 10</div>
+      </div>
+      <div class="badge-item locked">
+        <div class="badge-emoji">⚡</div>
+        <div class="badge-name">Speed Clearer</div>
+      </div>
+      <div class="badge-item locked">
+        <div class="badge-emoji">🎯</div>
+        <div class="badge-name">Exam Ready</div>
+      </div>
+      <div class="badge-item locked">
+        <div class="badge-emoji">🌙</div>
+        <div class="badge-name">Night Owl</div>
+      </div>
+      <div class="badge-item locked">
+        <div class="badge-emoji">💯</div>
+        <div class="badge-name">Perfect Score</div>
+      </div>
+    </div>
+
+    <!-- MENU -->
+    <div class="section-title anim-fade-up d5">Account</div>
+    <div class="anim-fade-up d6">
+      <a href="pay.html" class="menu-item">
+        <div class="menu-icon" style="background:#F0FDF4;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2">
+            <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+          </svg>
+        </div>
+        <span class="menu-label">Payment History</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2.5">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </a>
+
+      <div class="menu-item" onclick="toast('Notifications coming soon','default')">
+        <div class="menu-icon" style="background:#EEF2FF;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2">
+            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 01-3.46 0"/>
+          </svg>
+        </div>
+        <span class="menu-label">Notifications</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2.5">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </div>
+
+      <div class="menu-item" onclick="toast('Help coming soon','default')">
+        <div class="menu-icon" style="background:#FFF7ED;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <span class="menu-label">Help & Support</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2.5">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </div>
+
+      <div class="menu-item" onclick="handleLogout()" style="margin-top:8px;">
+        <div class="menu-icon" style="background:#FEF2F2;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2">
+            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+        </div>
+        <span class="menu-label" style="color:#DC2626;">Log Out</span>
+      </div>
+    </div>
+
+    <p style="text-align:center;font-size:11px;color:#CBD5E1;margin-top:20px;">
+      Schola v1.0.0 · Built for Nigerian students 🇳🇬
+    </p>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script>
+    firebase.initializeApp(SCHOLA_CONFIG.firebase);
+    const auth = firebase.auth();
+    const db   = firebase.firestore();
+
+    const user = Session.require();
+
+    // Populate profile
+    const firstName = user.fullName?.split(' ')[0] || 'S';
+    const initials  = (user.fullName || 'SC').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+
+    document.getElementById('avatar-initials').textContent = initials;
+    document.getElementById('profile-name').textContent   = user.fullName || 'Student';
+    document.getElementById('profile-dept').textContent   = `${user.department || ''} · ${user.level || ''}L`;
+    document.getElementById('profile-mat').textContent    = user.matNumber || '';
+    document.getElementById('card-name').textContent      = user.fullName || '';
+    document.getElementById('card-dept').textContent      = `${user.department} · ${user.level}L · ${user.matNumber}`;
+    document.getElementById('schola-id').textContent      = 'SCH-' + (user.uid || '').slice(0, 6).toUpperCase();
+
+    // Stats
+    const streak   = parseInt(localStorage.getItem('schola_streak') || '0');
+    const sessions = parseInt(localStorage.getItem('schola_sessions') || '0');
+    document.getElementById('stat-sessions').textContent = sessions;
+    document.getElementById('stat-streak').textContent   = '🔥' + streak;
+    document.getElementById('stat-paid').textContent     = naira(user.totalPaid || 0);
+
+    // Quota
+    const used = AiQuota.get();
+    document.getElementById('quota-used').textContent = used;
+    if (user.plan === 'pro') document.getElementById('pro-card').style.display = 'none';
+
+    // Rank logic
+    function getRank(streak, sessions) {
+      if (sessions >= 100 && streak >= 30) return '🏆 Legend';
+      if (sessions >= 50)                  return '🎓 Valedictorian';
+      if (sessions >= 20 && streak >= 14)  return '📖 Academic';
+      if (sessions >= 10 && streak >= 7)   return '✨ Studious';
+      if (sessions >= 3)                   return '⭐ Scholar';
+      return '🌱 Fresher';
+    }
+    document.getElementById('rank-badge').textContent = getRank(streak, sessions);
+
+    function shareCard() {
+      const text = `🎓 My Schola Academic Card\n\nName: ${user.fullName}\nDepartment: ${user.department}\nLevel: ${user.level}L\nRank: ${getRank(streak, sessions)}\nStreak: 🔥${streak} days\n\nJoin me on Schola — the AI study companion for Nigerian students.`;
+      if (navigator.share) {
+        navigator.share({ title: 'My Schola Card', text });
+      } else {
+        navigator.clipboard.writeText(text);
+        toast('Card copied to clipboard!', 'success');
+      }
+    }
+
+    async function handleLogout() {
+      if (!confirm('Are you sure you want to log out?')) return;
+      await auth.signOut();
+      Session.clear();
+      localStorage.removeItem('schola_streak');
+      localStorage.removeItem('schola_last_study');
+      AiQuota.reset();
+      goTo('index.html');
+    }
+  </script>
+
+  <script>renderNav('profile');</script>
+</body>
+</html>

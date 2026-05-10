@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Schola — Pay</title>
+  <link rel="stylesheet" href="css/schola.css">
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://js.paystack.co/v1/inline.js"></script>
+  <style>
+    .pay-header {
+      background: linear-gradient(-45deg, #1A1F36, #252d4a, #1e2d5a, #1A1F36);
+      background-size: 400% 400%;
+      animation: gradientFlow 15s ease infinite;
+      border-radius: 0 0 32px 32px;
+      padding: 20px 20px 36px;
+      display: flex; flex-direction: column; align-items: center; gap: 16px;
+    }
+
+    .ring-svg circle {
+      transition: stroke-dashoffset 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .fee-card {
+      transition: transform 0.15s var(--ease-spring), box-shadow 0.15s;
+    }
+    .fee-card:active { transform: scale(0.97); }
+
+    /* Processing screen */
+    .overlay-screen {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 20px; z-index: 9999;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    .overlay-screen.show { opacity: 1; pointer-events: all; }
+
+    .processing-bg { background: rgba(26,31,54,0.95); backdrop-filter: blur(20px); }
+    .success-bg    { background: #0F172A; }
+
+    /* Animated check */
+    .check-ring {
+      width: 90px; height: 90px;
+      position: relative; flex-shrink: 0;
+    }
+    .check-ring svg { position: absolute; inset: 0; }
+    .check-ring .bg-circle { stroke: rgba(5,150,105,0.2); }
+    .check-ring .fg-circle {
+      stroke: #059669;
+      stroke-dasharray: 251;
+      stroke-dashoffset: 251;
+      transition: stroke-dashoffset 0.7s ease;
+    }
+    .check-ring .checkmark {
+      stroke: #059669;
+      stroke-dasharray: 50;
+      stroke-dashoffset: 50;
+      transition: stroke-dashoffset 0.4s 0.6s ease;
+    }
+    .check-ring.animate .fg-circle { stroke-dashoffset: 0; }
+    .check-ring.animate .checkmark { stroke-dashoffset: 0; }
+
+    .history-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 0; border-bottom: 1px solid var(--border-2);
+    }
+    .history-icon-wrap {
+      width: 40px; height: 40px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- PROCESSING OVERLAY -->
+  <div class="overlay-screen processing-bg" id="processing-screen">
+    <div class="spinner"></div>
+    <div style="text-align:center;">
+      <p style="color:#fff;font-size:17px;font-weight:700;margin-bottom:6px;">Processing Payment</p>
+      <p style="color:rgba(255,255,255,0.4);font-size:13px;">Please don't close the app</p>
+    </div>
+  </div>
+
+  <!-- SUCCESS OVERLAY -->
+  <div class="overlay-screen success-bg" id="success-screen">
+    <div style="text-align:center;padding:32px;">
+      <!-- Animated check ring -->
+      <div class="check-ring" id="check-ring" style="margin:0 auto 24px;">
+        <svg width="90" height="90" viewBox="0 0 90 90">
+          <circle class="bg-circle" cx="45" cy="45" r="40"
+            fill="none" stroke-width="4"/>
+          <circle class="fg-circle" cx="45" cy="45" r="40"
+            fill="none" stroke-width="4"
+            stroke-linecap="round"
+            transform="rotate(-90 45 45)"/>
+          <path class="checkmark" d="M27 45 L39 57 L63 33"
+            fill="none" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+
+      <p style="color:rgba(255,255,255,0.5);font-size:14px;margin-bottom:8px;">Payment Successful</p>
+      <p style="color:#fff;font-size:40px;font-weight:800;
+        font-family:'Plus Jakarta Sans',sans-serif;margin-bottom:8px;letter-spacing:-1px;"
+        id="success-amount">₦0</p>
+      <p style="color:rgba(255,255,255,0.7);font-size:16px;font-weight:600;margin-bottom:6px;"
+        id="success-category">Category</p>
+      <p style="color:rgba(255,255,255,0.35);font-size:12px;font-family:monospace;margin-bottom:40px;"
+        id="success-ref">REF</p>
+
+      <div style="display:flex;flex-direction:column;gap:10px;width:100%;">
+        <button class="btn btn-primary" onclick="sendWhatsApp()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/>
+            <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.556 4.116 1.528 5.845L0 24l6.335-1.508A11.934 11.934 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22a9.94 9.94 0 01-5.17-1.38l-.37-.22-3.76.895.953-3.668-.242-.382A9.937 9.937 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+          </svg>
+          Send Receipt to WhatsApp
+        </button>
+        <button class="btn btn-ghost-dark" onclick="hideSuccess()">
+          Back to Payments
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAY HEADER WITH RING -->
+  <div class="pay-header">
+    <div class="ring-container" id="ring-container">
+      <svg id="ring-svg" width="130" height="130" viewBox="0 0 130 130" class="ring-svg">
+        <circle cx="65" cy="65" r="54" fill="none"
+          stroke="rgba(255,255,255,0.1)" stroke-width="10"/>
+        <circle id="ring-progress" cx="65" cy="65" r="54" fill="none"
+          stroke="#4F46E5" stroke-width="10"
+          stroke-linecap="round"
+          stroke-dasharray="339.29"
+          stroke-dashoffset="339.29"
+          transform="rotate(-90 65 65)"/>
+      </svg>
+      <div class="ring-label" style="color:#fff;">
+        <div class="ring-pct" id="ring-pct">0%</div>
+        <div style="font-size:11px;opacity:0.5;margin-top:2px;" id="ring-label">cleared</div>
+      </div>
+    </div>
+    <div style="text-align:center;color:#fff;">
+      <p style="font-size:12px;opacity:0.45;margin-bottom:4px;">Outstanding Balance</p>
+      <p style="font-size:26px;font-weight:800;font-family:'Plus Jakarta Sans',sans-serif;"
+        id="outstanding-amount">₦—</p>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content" style="padding-top:20px;">
+
+    <p class="section-header" data-anim style="opacity:0;">Fee Payments</p>
+
+    <div id="fee-list" data-anim style="opacity:0;">
+      <!-- Fee cards injected -->
+      <div class="skeleton skeleton-md" style="margin-bottom:10px;"></div>
+      <div class="skeleton skeleton-md" style="margin-bottom:10px;"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <p class="section-header" data-anim style="opacity:0;">Payment History</p>
+    <div id="history-list" data-anim style="opacity:0;">
+      <div class="skeleton skeleton-sm" style="margin-bottom:8px;"></div>
+      <div class="skeleton skeleton-sm" style="margin-bottom:8px;"></div>
+    </div>
+
+  </div>
+
+  <!-- PAYMENT DETAIL SHEET -->
+  <div class="sheet-overlay" id="pay-overlay" onclick="closeSheet('pay')"></div>
+  <div class="sheet" id="pay-sheet">
+    <div class="sheet-handle"></div>
+    <h3 style="font-size:20px;font-weight:800;margin-bottom:4px;" id="sheet-fee-name">Fee</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:24px;" id="sheet-dept">Dept</p>
+
+    <div style="background:var(--border-2);border-radius:16px;padding:16px;margin-bottom:24px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
+        <span style="font-size:13px;color:var(--muted);">Fee amount</span>
+        <span style="font-size:14px;font-weight:700;" id="sheet-base">₦0</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
+        <span style="font-size:13px;color:var(--muted);">Convenience fee</span>
+        <span style="font-size:14px;font-weight:700;">₦150</span>
+      </div>
+      <div style="height:1px;background:var(--border);margin:4px 0 12px;"></div>
+      <div style="display:flex;justify-content:space-between;">
+        <span style="font-size:14px;font-weight:700;">Total</span>
+        <span style="font-size:18px;font-weight:800;color:var(--indigo);" id="sheet-total">₦0</span>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="pay-confirm-btn" onclick="confirmPay()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+      </svg>
+      Pay with Paystack
+    </button>
+    <button class="btn btn-secondary" style="margin-top:10px;" onclick="closeSheet('pay')">
+      Cancel
+    </button>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/icons.js"></script>
+  <script src="js/animations.js"></script>
+  <script>
+    firebase.initializeApp(SCHOLA_CONFIG.firebase);
+    const db   = firebase.firestore();
+    const user = Session.require();
+
+    let selectedFee = null;
+    let totalPaid   = 0;
+    let paidFeeIds  = JSON.parse(localStorage.getItem('paid_fees') || '[]');
+    let lastRef     = '';
+
+    // Animate the ring
+    function animateRing(paid, total) {
+      const pct     = total > 0 ? Math.round((paid / total) * 100) : 0;
+      const circle  = document.getElementById('ring-progress');
+      const circ    = 339.29;
+      const offset  = circ - (pct / 100) * circ;
+
+      const color   = pct === 100 ? '#059669' : pct > 60 ? '#D97706' : '#4F46E5';
+      circle.setAttribute('stroke', color);
+
+      gsap.to(circle, {
+        attr: { 'stroke-dashoffset': offset },
+        duration: 1.2, ease: 'power3.out'
+      });
+
+      document.getElementById('ring-pct').textContent = pct + '%';
+      document.getElementById('ring-label').textContent =
+        pct === 100 ? 'Fully Cleared ✅' : 'cleared';
+
+      // Counter animate outstanding
+      const outstanding = Math.max(0, total - paid);
+      const el = document.getElementById('outstanding-amount');
+      PageAnim.counter(el, outstanding, '₦', '', 1.0);
+    }
+
+    function buildFeecards(totalPaidAmount) {
+      const totalAll = SCHOLA_CONFIG.fees.reduce((s, f) => s + f.amount, 0);
+      animateRing(totalPaidAmount, totalAll);
+
+      const html = SCHOLA_CONFIG.fees.map(fee => {
+        const isPaid = paidFeeIds.includes(fee.id);
+        return `
+          <div class="fee-card ${isPaid ? 'paid' : ''}" style="--fee-color:${fee.color};"
+            ${!isPaid ? `onclick="openPaySheet('${fee.id}')"` : ''}>
+            <div style="width:50px;height:50px;border-radius:14px;flex-shrink:0;
+              background:${fee.color}18;display:flex;align-items:center;
+              justify-content:center;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="${fee.color}" stroke-width="2" stroke-linecap="round">
+                <rect x="1" y="4" width="22" height="16" rx="2"/>
+                <line x1="1" y1="10" x2="23" y2="10"/>
+              </svg>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:700;font-size:15px;margin-bottom:3px;">${fee.name}</div>
+              <div style="font-size:17px;font-weight:800;color:${fee.color};
+                font-family:'Plus Jakarta Sans',sans-serif;">${naira(fee.amount)}</div>
+            </div>
+            ${isPaid
+              ? `<div style="display:flex;align-items:center;gap:6px;color:#059669;">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                  </svg>
+                  <span style="font-size:12px;font-weight:700;">Paid</span>
+                </div>`
+              : `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();openPaySheet('${fee.id}')">
+                  Pay
+                </button>`
+            }
+          </div>`;
+      }).join('');
+
+      document.getElementById('fee-list').innerHTML = html;
+
+      // Stagger animate fee cards
+      setTimeout(() => {
+        const cards = document.querySelectorAll('.fee-card');
+        gsap.fromTo(cards,
+          { opacity: 0, y: 20, scale: 0.97 },
+          { opacity: 1, y: 0, scale: 1, stagger: 0.07,
+            duration: 0.45, ease: 'power3.out' }
+        );
+        Micro.initAll();
+      }, 100);
+    }
+
+    function openPaySheet(feeId) {
+      selectedFee = SCHOLA_CONFIG.fees.find(f => f.id === feeId);
+      if (!selectedFee) return;
+      document.getElementById('sheet-fee-name').textContent = selectedFee.name;
+      document.getElementById('sheet-dept').textContent =
+        `${user.department} · Level ${user.level}L`;
+      document.getElementById('sheet-base').textContent  = naira(selectedFee.amount);
+      document.getElementById('sheet-total').textContent = naira(selectedFee.amount + 150);
+      openSheet('pay');
+      Micro.haptic([15]);
+    }
+
+    function confirmPay() {
+      closeSheet('pay');
+      if (!selectedFee) return;
+      Micro.haptic([20]);
+      document.getElementById('processing-screen').classList.add('show');
+
+      payWithPaystack({
+        email:  user.email,
+        amount: selectedFee.amount + 150,
+        name:   user.fullName,
+        meta:   [{ display_name: 'Category', variable_name: 'category', value: selectedFee.name }],
+        onSuccess: async (response) => {
+          document.getElementById('processing-screen').classList.remove('show');
+          lastRef = response.reference;
+
+          // Save to Firestore
+          const record = {
+            studentUid:  user.uid,
+            studentName: user.fullName,
+            matNumber:   user.matNumber,
+            department:  user.department,
+            level:       user.level,
+            category:    selectedFee.name,
+            feeId:       selectedFee.id,
+            amount:      selectedFee.amount,
+            total:       selectedFee.amount + 150,
+            reference:   response.reference,
+            paidAt:      firebase.firestore.FieldValue.serverTimestamp(),
+          };
+
+          try {
+            await db.collection('students').doc(user.uid)
+              .collection('payments').add(record);
+            await db.collection('all_payments').add(record);
+            await db.collection('students').doc(user.uid).update({
+              totalPaid: firebase.firestore.FieldValue.increment(selectedFee.amount)
+            });
+          } catch (e) { console.error(e); }
+
+          paidFeeIds.push(selectedFee.id);
+          localStorage.setItem('paid_fees', JSON.stringify(paidFeeIds));
+          Session.set({ ...Session.get(), totalPaid: (Session.get().totalPaid || 0) + selectedFee.amount });
+
+          showSuccess();
+        },
+        onClose: () => {
+          document.getElementById('processing-screen').classList.remove('show');
+          toast('Payment cancelled', 'error');
+        }
+      });
+    }
+
+    function showSuccess() {
+      document.getElementById('success-amount').textContent   = naira(selectedFee.amount);
+      document.getElementById('success-category').textContent = selectedFee.name;
+      document.getElementById('success-ref').textContent      = 'REF: ' + lastRef;
+
+      const screen = document.getElementById('success-screen');
+      screen.classList.add('show');
+
+      // Animate check ring
+      setTimeout(() => {
+        document.getElementById('check-ring').classList.add('animate');
+      }, 200);
+
+      // Confetti after ring completes
+      setTimeout(() => {
+        Celebrate.confetti(2500);
+        Micro.haptic([0, 100, 50, 100]);
+      }, 700);
+
+      // Bounce success amount
+      gsap.fromTo('#success-amount',
+        { scale: 0.7, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.6, delay: 0.9, ease: 'back.out(1.8)' }
+      );
+    }
+
+    function hideSuccess() {
+      document.getElementById('success-screen').classList.remove('show');
+      document.getElementById('check-ring').classList.remove('animate');
+      loadData();
+    }
+
+    function sendWhatsApp() {
+      const msg = encodeURIComponent(
+        `✅ *Payment Receipt — Schola*\n\n` +
+        `👤 Student: ${user.fullName}\n` +
+        `🆔 Mat No: ${user.matNumber}\n` +
+        `🏛️ Dept: ${user.department}\n` +
+        `📋 Category: ${selectedFee?.name}\n` +
+        `💰 Amount: ${naira(selectedFee?.amount)}\n` +
+        `🔖 Ref: ${lastRef}\n` +
+        `📅 Date: ${new Date().toLocaleDateString('en-NG',{day:'numeric',month:'long',year:'numeric'})}\n\n` +
+        `_Powered by Schola — schola.app_`
+      );
+      window.open(`https://wa.me/?text=${msg}`, '_blank');
+    }
+
+    async function loadData() {
+      try {
+        const snap = await db.collection('students').doc(user.uid).get();
+        totalPaid = snap.exists ? (snap.data().totalPaid || 0) : 0;
+      } catch { totalPaid = 0; }
+      buildFeecards(totalPaid);
+
+      // Load history
+      try {
+        const histSnap = await db.collection('students').doc(user.uid)
+          .collection('payments').orderBy('paidAt', 'desc').limit(5).get();
+
+        if (histSnap.empty) {
+          document.getElementById('history-list').innerHTML = `
+            <div style="text-align:center;padding:32px 0;color:var(--muted-2);">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="1.5" style="margin:0 auto 10px;display:block;opacity:0.5;">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <p style="font-size:14px;">No payment history yet</p>
+            </div>`;
+        } else {
+          document.getElementById('history-list').innerHTML = histSnap.docs.map(d => {
+            const p = d.data();
+            return `
+              <div class="history-row">
+                <div class="history-icon-wrap" style="background:var(--green-soft);">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </div>
+                <div style="flex:1;">
+                  <div style="font-weight:700;font-size:14px;">${p.category}</div>
+                  <div style="font-size:12px;color:var(--muted);">${fmtDate(p.paidAt)}</div>
+                </div>
+                <div style="text-align:right;">
+                  <div style="font-weight:800;color:var(--green);font-family:'Plus Jakarta Sans',sans-serif;">
+                    ${naira(p.amount)}
+                  </div>
+                  <div class="badge badge-green" style="font-size:10px;">PAID</div>
+                </div>
+              </div>`;
+          }).join('');
+
+          // Stagger history items
+          setTimeout(() => {
+            PageAnim.staggerList(
+              document.querySelectorAll('.history-row'), 0.06
+            );
+          }, 100);
+        }
+      } catch {
+        document.getElementById('history-list').innerHTML =
+          `<p style="color:var(--muted-2);font-size:13px;">Could not load

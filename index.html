@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1A1F36">
+  <title>Schola</title>
+  <link rel="stylesheet" href="css/schola.css">
+  <!-- GSAP -->
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <style>
+    body {
+      background: #1A1F36;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Particle canvas */
+    #particles { position: absolute; inset: 0; z-index: 0; }
+
+    /* Animated orbs */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(60px);
+      pointer-events: none;
+    }
+    .orb-1 {
+      width: 400px; height: 400px;
+      background: rgba(79,70,229,0.2);
+      top: -120px; right: -100px;
+    }
+    .orb-2 {
+      width: 300px; height: 300px;
+      background: rgba(124,58,237,0.15);
+      bottom: 60px; left: -80px;
+    }
+    .orb-3 {
+      width: 200px; height: 200px;
+      background: rgba(99,102,241,0.12);
+      top: 40%; left: 30%;
+    }
+
+    /* Logo mark */
+    .logo-mark {
+      width: 90px; height: 90px;
+      border-radius: 26px;
+      background: linear-gradient(135deg, #4F46E5, #818cf8);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto;
+      position: relative;
+      opacity: 0;
+    }
+    .logo-mark::after {
+      content: '';
+      position: absolute; inset: -2px;
+      border-radius: 28px;
+      background: linear-gradient(135deg, #4F46E5, #818cf8, #a5b4fc);
+      z-index: -1;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .brand-name {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 54px; font-weight: 800;
+      letter-spacing: -2px;
+      background: linear-gradient(135deg, #fff 30%, #818cf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      opacity: 0; transform: translateY(20px);
+    }
+
+    .tagline {
+      font-size: 15px;
+      color: rgba(255,255,255,0.4);
+      opacity: 0; transform: translateY(16px);
+    }
+
+    .features-row {
+      display: flex; gap: 8px; flex-wrap: wrap;
+      justify-content: center;
+      opacity: 0;
+    }
+    .feature-pill {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: var(--r-full);
+      padding: 7px 14px;
+      font-size: 12px; font-weight: 600;
+      color: rgba(255,255,255,0.65);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .feature-pill svg { opacity: 0.7; }
+
+    .cta-block { opacity: 0; transform: translateY(24px); width: 100%; }
+
+    .social-proof {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      margin-bottom: 20px;
+    }
+    .avatars {
+      display: flex;
+    }
+    .avatar-dot {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 2px solid #1A1F36;
+      margin-left: -8px;
+      font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .avatar-dot:first-child { margin-left: 0; }
+
+    /* Scroll indicator */
+    .scroll-hint {
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      opacity: 0;
+    }
+    .scroll-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+    }
+    .scroll-dot.active { background: var(--indigo); }
+  </style>
+</head>
+<body>
+  <canvas id="particles"></canvas>
+  <div class="orb orb-1" id="orb1"></div>
+  <div class="orb orb-2" id="orb2"></div>
+  <div class="orb orb-3" id="orb3"></div>
+
+  <!-- TOP SPACER -->
+  <div style="flex:1; min-height: 48px;"></div>
+
+  <!-- CENTER CONTENT -->
+  <div style="display:flex;flex-direction:column;align-items:center;text-align:center;
+    gap:20px;padding:0 24px;z-index:1;">
+
+    <!-- Logo -->
+    <div class="logo-mark" id="logo-mark">
+      <svg width="46" height="46" viewBox="0 0 46 46" fill="none">
+        <path id="logo-path-1" d="M10 31C10 20 16 13 23 9C30 13 36 20 36 31"
+          stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"
+          stroke-dasharray="60" stroke-dashoffset="60"/>
+        <circle id="logo-circle" cx="23" cy="31" r="6" fill="white" opacity="0"/>
+        <path id="logo-path-2" d="M17 24L23 31L29 24"
+          stroke="white" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round" fill="none" opacity="0"/>
+      </svg>
+    </div>
+
+    <!-- Brand name -->
+    <h1 class="brand-name" id="brand-name">Schola</h1>
+
+    <!-- Tagline -->
+    <p class="tagline" id="tagline">Your campus. Your edge.</p>
+
+    <!-- Feature pills -->
+    <div class="features-row" id="features">
+      <div class="feature-pill" data-icon-pill="zap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+        </svg>
+        AI Tutor
+      </div>
+      <div class="feature-pill">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+        </svg>
+        Smart Payments
+      </div>
+      <div class="feature-pill">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+        Campus Rankings
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM SPACER -->
+  <div style="flex:1;"></div>
+
+  <!-- CTA BLOCK -->
+  <div style="padding:0 24px 48px;z-index:1;" class="cta-block" id="cta-block">
+    <!-- Social proof -->
+    <div class="social-proof" style="margin-bottom:24px;">
+      <div class="avatars">
+        <div class="avatar-dot" style="background:#4F46E5;">J</div>
+        <div class="avatar-dot" style="background:#059669;">A</div>
+        <div class="avatar-dot" style="background:#D97706;">E</div>
+        <div class="avatar-dot" style="background:#7C3AED;">F</div>
+      </div>
+      <p style="font-size:12px;color:rgba(255,255,255,0.45);">
+        Built for Nigerian students
+      </p>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <button class="btn btn-primary" id="btn-start" onclick="handleStart()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+        </svg>
+        Get Started — It's Free
+      </button>
+      <button class="btn btn-ghost-dark" id="btn-login" onclick="handleLogin()">
+        I Already Have an Account
+      </button>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/icons.js"></script>
+  <script src="js/animations.js"></script>
+  <script>
+    // Redirect if logged in
+    if (Session.get()) {
+      window.location.href = 'home.html';
+    }
+
+    // ── PARTICLE BACKGROUND ────────────────
+    const canvas  = document.getElementById('particles');
+    const ctx     = canvas.getContext('2d');
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const particles = Array.from({ length: 40 }, () => ({
+      x:    Math.random() * canvas.width,
+      y:    Math.random() * canvas.height,
+      r:    Math.random() * 1.5 + 0.5,
+      dx:   (Math.random() - 0.5) * 0.4,
+      dy:   (Math.random() - 0.5) * 0.4,
+      opacity: Math.random() * 0.4 + 0.1
+    }));
+
+    function drawParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(129,140,248,${p.opacity})`;
+        ctx.fill();
+        p.x += p.dx; p.y += p.dy;
+        if (p.x < 0 || p.x > canvas.width)  p.dx *= -1;
+        if (p.y < 0 || p.y > canvas.height) p.dy *= -1;
+      });
+      requestAnimationFrame(drawParticles);
+    }
+    drawParticles();
+
+    // ── ENTRANCE ANIMATION ─────────────────
+    const tl = gsap.timeline({ delay: 0.2 });
+
+    // Orb drift
+    gsap.to('#orb1', { x: 20, y: -20, duration: 8, ease: 'sine.inOut', yoyo: true, repeat: -1 });
+    gsap.to('#orb2', { x: -20, y: 15, duration: 10, ease: 'sine.inOut', yoyo: true, repeat: -1 });
+    gsap.to('#orb3', { x: 15, y: 20, duration: 7, ease: 'sine.inOut', yoyo: true, repeat: -1 });
+
+    // Logo mark entrance
+    tl.to('#logo-mark', { opacity: 1, duration: 0.5, ease: 'power2.out' })
+
+    // Draw logo SVG path
+    .to('#logo-path-1', {
+        strokeDashoffset: 0, duration: 0.9, ease: 'power2.out'
+      }, '-=0.2')
+    .to('#logo-circle', { opacity: 1, scale: 1, duration: 0.4,
+        transformOrigin: 'center', ease: 'back.out(2)' }, '-=0.3')
+    .to('#logo-path-2', { opacity: 0.5, duration: 0.3 }, '-=0.1')
+
+    // Logo float
+    .add(() => {
+      gsap.to('#logo-mark', {
+        y: -10, duration: 3, ease: 'sine.inOut', yoyo: true, repeat: -1
+      });
+    })
+
+    // Glow on logo
+    .to('#logo-mark', {
+      boxShadow: '0 0 40px rgba(79,70,229,0.5), 0 20px 40px rgba(79,70,229,0.3)',
+      duration: 0.6
+    }, '<')
+
+    // Brand name
+    .to('#brand-name', {
+      opacity: 1, y: 0, duration: 0.6, ease: 'power3.out'
+    }, '-=0.3')
+
+    // Tagline
+    .to('#tagline', {
+      opacity: 1, y: 0, duration: 0.5, ease: 'power3.out'
+    }, '-=0.3')
+
+    // Features
+    .to('#features', { opacity: 1, duration: 0.5 }, '-=0.2')
+    .fromTo('#features .feature-pill',
+      { opacity: 0, y: 10, scale: 0.9 },
+      { opacity: 1, y: 0, scale: 1, stagger: 0.07,
+        duration: 0.4, ease: 'back.out(1.5)' }, '<')
+
+    // CTA block
+    .to('#cta-block', {
+      opacity: 1, y: 0, duration: 0.6, ease: 'power3.out'
+    }, '-=0.1');
+
+    // Button hover effects
+    ['btn-start', 'btn-login'].forEach(id => {
+      const btn = document.getElementById(id);
+      btn.addEventListener('pointerdown', (e) => Micro.ripple(e));
+    });
+
+    function handleStart() {
+      Micro.haptic([15]);
+      Micro.press(document.getElementById('btn-start'));
+      setTimeout(() => goTo('auth.html?mode=register'), 120);
+    }
+    function handleLogin() {
+      Micro.haptic([10]);
+      setTimeout(() => goTo('auth.html?mode=login'), 100);
+    }
+  </script>
+</body>
+</html>
