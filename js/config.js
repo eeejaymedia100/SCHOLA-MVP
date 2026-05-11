@@ -18,7 +18,7 @@ const SCHOLA_CONFIG = {
 
   // ── GEMINI AI ─────────────────────────────
   // Get from: aistudio.google.com > Get API Key
-  geminiKey: "YOUR_GEMINI_API_KEY",
+  geminiKey: "AIzaSyAn8smk1o1NERp1S5WY1oOiFeq8MeLpwGQ",
   geminiUrl: "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
 
   // ── PAYSTACK ──────────────────────────────
