@@ -24,7 +24,7 @@ const SCHOLA_CONFIG = {
   // ── PAYSTACK ──────────────────────────────
   // Get from: dashboard.paystack.com > Settings > API Keys
   // Use TEST key while building (starts with pk_test_)
-  paystackKey: "pk_test_YOUR_PAYSTACK_PUBLIC_KEY",
+  paystackKey: "pk_test_c3db9c2ef68ac48611f63593d0dad0e562b87f62",
 
   // ── APP SETTINGS ──────────────────────────
   appName:    "Schola",
