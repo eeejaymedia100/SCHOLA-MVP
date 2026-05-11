@@ -733,3 +733,234 @@
       </div>
 
     </div><!-- end academic section -->
+<!-- ACCOUNT CREDENTIALS SECTION -->
+    <div class="form-section">
+      <div class="section-label">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <rect x="3" y="11" width="18" height="11" rx="2"/>
+          <path d="M7 11V7a5 5 0 0110 0v4"/>
+        </svg>
+        Account Credentials
+      </div>
+
+      <!-- Email -->
+      <div class="field">
+        <div class="field-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+          Email Address
+        </div>
+        <div class="input-shell" id="sh-email">
+          <svg class="field-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+          <input type="email" id="r-email" placeholder="you@mail.com" autocomplete="email"/>
+        </div>
+        <div class="err-text" id="err-email"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span></span></div>
+      </div>
+
+      <!-- Password -->
+      <div class="field">
+        <div class="field-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2"/>
+            <path d="M7 11V7a5 5 0 0110 0v4"/>
+          </svg>
+          Password
+        </div>
+        <div class="input-shell" id="sh-pw">
+          <svg class="field-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2"/>
+            <path d="M7 11V7a5 5 0 0110 0v4"/>
+          </svg>
+          <input type="password" id="r-pw" placeholder="Minimum 6 characters"/>
+          <button class="eye-btn" onclick="togglePw('r-pw',this)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+        <div id="pw-strength" style="margin-top:4px;display:none;">
+          <div style="display:flex;gap:4px;margin-bottom:3px;">
+            <div style="flex:1;height:3px;border-radius:2px;background:var(--border);" id="ps1"></div>
+            <div style="flex:1;height:3px;border-radius:2px;background:var(--border);" id="ps2"></div>
+            <div style="flex:1;height:3px;border-radius:2px;background:var(--border);" id="ps3"></div>
+          </div>
+          <div style="font-size:11px;color:var(--muted);font-weight:600;" id="ps-label"></div>
+        </div>
+        <div class="err-text" id="err-pw"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span></span></div>
+      </div>
+
+    </div><!-- end credentials section -->
+
+    <div class="error-box" id="r-err">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px;">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <span id="r-err-text"></span>
+    </div>
+
+    <button class="btn btn-primary" id="reg-btn" onclick="handleRegister(event)">
+      <span class="btn-label" style="display:flex;align-items:center;gap:8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <line x1="19" y1="8" x2="19" y2="14"/>
+          <line x1="22" y1="11" x2="16" y2="11"/>
+        </svg>
+        Create My Account
+      </span>
+      <div class="btn-spinner"></div>
+    </button>
+
+    <div class="footer-link">
+      <span>Already have an account?</span>
+      <span class="link" onclick="switchTab('login')">Sign in</span>
+    </div>
+
+    <p class="footer-tiny">
+      By creating an account you agree to our
+      <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+    </p>
+
+  </div><!-- end register panel -->
+
+</div><!-- end card -->
+
+<script>
+// ── FIREBASE CONFIG ─────────────────────────
+// Replace with your real Firebase config
+const FIREBASE_CONFIG = {
+  apiKey:            "YOUR_FIREBASE_API_KEY",
+  authDomain:        "YOUR_PROJECT.firebaseapp.com",
+  projectId:         "YOUR_PROJECT_ID",
+  storageBucket:     "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId:             "YOUR_APP_ID"
+};
+
+try {
+  firebase.initializeApp(FIREBASE_CONFIG);
+} catch(e) {
+  console.warn('Firebase init:', e.message);
+}
+
+const auth = firebase.auth();
+const db   = firebase.firestore();
+
+// ── SESSION ─────────────────────────────────
+function getSession() {
+  try { return JSON.parse(localStorage.getItem('schola_user')); }
+  catch { return null; }
+}
+function setSession(data) {
+  try { localStorage.setItem('schola_user', JSON.stringify(data)); }
+  catch(e) {}
+}
+
+// Redirect if logged in
+if (getSession()) window.location.href = 'home.html';
+
+// Check URL param
+const urlMode = new URLSearchParams(window.location.search).get('mode');
+if (urlMode === 'register') switchTab('register');
+
+// ── SCHOOL DATA ──────────────────────────────
+// Institution → Faculty → Departments
+const SCHOOL_DATA = {
+  "Delta State University (DELSU)": {
+    "Faculty of Agriculture": [
+      "Agricultural Economics and Extension",
+      "Animal Science",
+      "Crop Science (Agronomy)",
+      "Soil Science",
+      "Fisheries and Aquaculture",
+      "Forestry and Wildlife Management"
+    ],
+    "Faculty of Arts": [
+      "English and Literary Studies",
+      "Fine and Applied Arts",
+      "French",
+      "History and International Studies",
+      "Linguistics and Communication Studies",
+      "Music",
+      "Philosophy",
+      "Religious Studies",
+      "Theatre Arts"
+    ],
+    "Faculty of Basic Medical Sciences": [
+      "Anatomy",
+      "Biochemistry",
+      "Medical Laboratory Science",
+      "Physiology"
+    ],
+    "Faculty of Clinical Sciences": [
+      "Medicine and Surgery",
+      "Nursing Science"
+    ],
+    "Faculty of Dentistry": [
+      "Dental Surgery"
+    ],
+    "Faculty of Education": [
+      "Adult and Non-Formal Education",
+      "Business Education",
+      "Curriculum Studies and Instructional Technology",
+      "Educational Administration and Policy Studies",
+      "Educational Psychology and Counselling",
+      "Physical and Health Education",
+      "Science Education",
+      "Social Science Education",
+      "Technical Education"
+    ],
+    "Faculty of Engineering": [
+      "Chemical Engineering",
+      "Civil Engineering",
+      "Computer Engineering",
+      "Electrical and Electronic Engineering",
+      "Mechanical Engineering",
+      "Petroleum Engineering"
+    ],
+    "Faculty of Law": [
+      "Jurisprudence and International Law",
+      "Private Law",
+      "Public Law"
+    ],
+    "Faculty of Management Sciences": [
+      "Accounting",
+      "Banking and Finance",
+      "Business Administration",
+      "Marketing",
+      "Public Administration"
+    ],
+    "Faculty of Pharmacy": [
+      "Clinical Pharmacy and Pharmacy Practice",
+      "Pharmaceutical Chemistry",
+      "Pharmaceutics and Pharmaceutical Technology",
+      "Pharmacognosy and Phytotherapy",
+      "Pharmacology and Toxicology"
+    ],
+    "Faculty of Science": [
+      "Biochemistry",
+      "Biology",
+      "Chemistry",
+      "Computer Science",
+      "Geology",
+      "Mathematics",
+      "Microbiology",
+      "Physics",
+      "Statistics"
+    ],
+    "Faculty of Social Sciences": [
+      "Economics",
+      "Geography and Environmental Studies",
+      "Mass Communication",
+      "Political Science",
+      "Psychology",
+      "Sociology"
+    ],
