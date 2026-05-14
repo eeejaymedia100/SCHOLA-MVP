@@ -1438,3 +1438,534 @@ const SCHOOL_DATA = {
       "Medicine and Surgery","Dentistry","Nursing","Medical Laboratory Science","Physiotherapy","Radiography"
     ]
   },
+"Ambrose Alli University (AAU), Ekpoma": {
+    "Faculty of Agriculture": [
+      "Agricultural Economics and Extension","Animal Science","Crop Science","Fisheries","Soil Science"
+    ],
+    "Faculty of Arts": [
+      "English and Literature","French","History and International Studies",
+      "Linguistics","Music","Theatre Arts","Philosophy","Religious Studies"
+    ],
+    "Faculty of Clinical Sciences": ["Medicine and Surgery","Nursing Science"],
+    "Faculty of Basic Medical Sciences": ["Anatomy","Biochemistry","Medical Laboratory Science","Physiology"],
+    "Faculty of Education": [
+      "Educational Administration","Guidance and Counselling",
+      "Human Kinetics","Science Education","Vocational and Technical Education"
+    ],
+    "Faculty of Engineering": [
+      "Chemical Engineering","Civil Engineering","Computer Engineering",
+      "Electrical and Electronic Engineering","Mechanical Engineering"
+    ],
+    "Faculty of Environmental Sciences": [
+      "Architecture","Building","Estate Management","Urban and Regional Planning"
+    ],
+    "Faculty of Law": ["Commercial Law","International Law","Private Law","Public Law"],
+    "Faculty of Management Sciences": [
+      "Accounting","Banking and Finance","Business Administration","Marketing","Public Administration"
+    ],
+    "Faculty of Pharmacy": [
+      "Clinical Pharmacy","Pharmaceutical Chemistry","Pharmaceutics","Pharmacognosy","Pharmacology"
+    ],
+    "Faculty of Science": [
+      "Biochemistry","Biology","Chemistry","Computer Science",
+      "Mathematics","Microbiology","Physics","Statistics"
+    ],
+    "Faculty of Social Sciences": [
+      "Economics","Geography","Mass Communication","Political Science","Psychology","Sociology"
+    ]
+  },
+  "Rivers State University (RSU)": {
+    "Faculty of Agriculture": [
+      "Agricultural Economics and Extension","Animal Science","Crop Science","Fisheries","Soil Science"
+    ],
+    "Faculty of Engineering": [
+      "Chemical Engineering","Civil Engineering","Computer Engineering",
+      "Electrical Engineering","Marine Engineering","Mechanical Engineering","Petroleum Engineering"
+    ],
+    "Faculty of Environmental Sciences": [
+      "Architecture","Building","Estate Management","Quantity Surveying","Urban and Regional Planning"
+    ],
+    "Faculty of Humanities": [
+      "English and Communication Studies","History and Diplomatic Studies",
+      "Linguistics","Religious Studies","Theatre Arts"
+    ],
+    "Faculty of Management Sciences": [
+      "Accounting","Banking and Finance","Business Administration","Marketing","Public Administration"
+    ],
+    "Faculty of Natural and Applied Sciences": [
+      "Biochemistry","Chemistry","Computer Science","Geology","Mathematics","Microbiology","Physics","Statistics"
+    ],
+    "Faculty of Social Sciences": [
+      "Economics","Geography","Political Science","Psychology","Sociology"
+    ]
+  }
+};
+
+// ── CASCADING DROPDOWN LOGIC ─────────────────
+
+function onInstChange() {
+  const val = document.getElementById('r-inst').value;
+  const othersInst = document.getElementById('others-inst');
+  const cascadeFaculty = document.getElementById('cascade-faculty');
+  const cascadeDept = document.getElementById('cascade-dept');
+
+  // Reset downstream
+  resetSelect('r-faculty');
+  resetSelect('r-dept');
+  document.getElementById('others-faculty').classList.remove('visible');
+  document.getElementById('others-dept').classList.remove('visible');
+  cascadeDept.classList.remove('visible');
+
+  if (val === 'others') {
+    othersInst.classList.add('visible');
+    cascadeFaculty.classList.remove('visible');
+    // For Others: show faculty and dept as text inputs directly
+    cascadeFaculty.classList.add('visible');
+    // Set faculty select to show Others only
+    const fSelect = document.getElementById('r-faculty');
+    fSelect.innerHTML = '<option value="">Select or type below</option><option value="others">Others — Type mine</option>';
+    return;
+  }
+
+  othersInst.classList.remove('visible');
+
+  if (!val || !SCHOOL_DATA[val]) {
+    cascadeFaculty.classList.remove('visible');
+    return;
+  }
+
+  // Populate faculties
+  const faculties = Object.keys(SCHOOL_DATA[val]);
+  const fSelect = document.getElementById('r-faculty');
+  fSelect.innerHTML = '<option value="">Select your faculty</option>';
+  faculties.forEach(f => {
+    const opt = document.createElement('option');
+    opt.value = f; opt.textContent = f;
+    fSelect.appendChild(opt);
+  });
+  // Add Others option
+  const othOpt = document.createElement('option');
+  othOpt.value = 'others'; othOpt.textContent = 'Others — Type mine below';
+  fSelect.appendChild(othOpt);
+
+  cascadeFaculty.classList.add('visible');
+  animateCascade(cascadeFaculty);
+}
+
+function onFacultyChange() {
+  const inst = document.getElementById('r-inst').value;
+  const faculty = document.getElementById('r-faculty').value;
+  const othFaculty = document.getElementById('others-faculty');
+  const othDept = document.getElementById('others-dept');
+  const cascadeDept = document.getElementById('cascade-dept');
+
+  resetSelect('r-dept');
+  othDept.classList.remove('visible');
+
+  if (faculty === 'others') {
+    othFaculty.classList.add('visible');
+    cascadeDept.classList.add('visible');
+    // For Others faculty, show dept as text input
+    const dSelect = document.getElementById('r-dept');
+    dSelect.innerHTML = '<option value="">Select or type below</option><option value="others">Others — Type mine</option>';
+    return;
+  }
+
+  othFaculty.classList.remove('visible');
+
+  if (!faculty) {
+    cascadeDept.classList.remove('visible');
+    return;
+  }
+
+  const depts = SCHOOL_DATA[inst]?.[faculty];
+  if (!depts) {
+    cascadeDept.classList.remove('visible');
+    return;
+  }
+
+  const dSelect = document.getElementById('r-dept');
+  dSelect.innerHTML = '<option value="">Select your department</option>';
+  depts.forEach(d => {
+    const opt = document.createElement('option');
+    opt.value = d; opt.textContent = d;
+    dSelect.appendChild(opt);
+  });
+  const othOpt = document.createElement('option');
+  othOpt.value = 'others'; othOpt.textContent = 'Others — Type mine below';
+  dSelect.appendChild(othOpt);
+
+  // Handle dept Others toggle
+  dSelect.onchange = function() {
+    if (this.value === 'others') {
+      othDept.classList.add('visible');
+    } else {
+      othDept.classList.remove('visible');
+    }
+  };
+
+  cascadeDept.classList.add('visible');
+  animateCascade(cascadeDept);
+}
+
+function resetSelect(id) {
+  const sel = document.getElementById(id);
+  sel.innerHTML = '<option value="">Loading...</option>';
+}
+
+function animateCascade(el) {
+  if (typeof gsap !== 'undefined') {
+    gsap.fromTo(el, { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.35, ease: 'power3.out' });
+  }
+}
+
+// ── LEVEL SELECTION ──────────────────────────
+function selectLevel(btn, level) {
+  document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('r-level').value = level;
+  document.getElementById('err-level').classList.remove('show');
+  if (navigator.vibrate) navigator.vibrate(8);
+  if (typeof gsap !== 'undefined') {
+    gsap.timeline()
+      .to(btn, { scale: 0.9, duration: 0.08 })
+      .to(btn, { scale: 1.05, duration: 0.2, ease: 'back.out(2)' })
+      .to(btn, { scale: 1, duration: 0.15 });
+  }
+}
+
+// ── TOGGLE PASSWORD ──────────────────────────
+function togglePw(id, btn) {
+  const inp = document.getElementById(id);
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  btn.innerHTML = show
+    ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
+        <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
+        <line x1="1" y1="1" x2="23" y2="23"/>
+       </svg>`
+    : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+        <circle cx="12" cy="12" r="3"/>
+       </svg>`;
+}
+
+// ── PASSWORD STRENGTH ────────────────────────
+document.getElementById('r-pw').addEventListener('input', function() {
+  const val = this.value;
+  const wrap = document.getElementById('pw-strength');
+  const label = document.getElementById('ps-label');
+  if (!val) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+
+  let score = 0;
+  if (val.length >= 6)  score++;
+  if (val.length >= 10) score++;
+  if (/[A-Z]/.test(val) && /[0-9]/.test(val)) score++;
+
+  const bars  = ['ps1','ps2','ps3'];
+  const colors = ['#DC2626','#D97706','#059669'];
+  const labels = ['Too short','Could be stronger','Strong password'];
+
+  bars.forEach((b, i) => {
+    document.getElementById(b).style.background = i < score ? colors[score - 1] : '#E2E8F0';
+  });
+  label.textContent = labels[Math.min(score - 1, 2)] || 'Too short';
+  label.style.color = colors[Math.min(score - 1, 2)] || '#DC2626';
+});
+
+// ── FIELD VALIDATION ─────────────────────────
+function validateField(input, type) {
+  const shell = input.closest('.input-shell');
+  const check = document.getElementById('check-' + type);
+  if (input.value.trim().length > 1) {
+    shell.classList.add('is-valid');
+    if (check) check.style.display = 'block';
+  } else {
+    shell.classList.remove('is-valid');
+    if (check) check.style.display = 'none';
+  }
+}
+
+// ── TAB SWITCH ───────────────────────────────
+function switchTab(tab) {
+  document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+  document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+  document.getElementById('panel-login').classList.toggle('active', tab === 'login');
+  document.getElementById('panel-register').classList.toggle('active', tab === 'register');
+  document.getElementById('hero-sub').textContent = tab === 'login'
+    ? 'Sign in to continue your journey'
+    : 'Join Schola — it takes 60 seconds';
+}
+
+// ── SHOW ERROR ───────────────────────────────
+function showErr(id, msg) {
+  const box = document.getElementById(id);
+  const txt = box.querySelector('span') || document.getElementById(id + '-text');
+  if (txt) txt.textContent = msg;
+  box.classList.toggle('show', !!msg);
+  if (msg && typeof gsap !== 'undefined') {
+    gsap.timeline()
+      .to(box.closest('.field') || box, { x: -6, duration: 0.06 })
+      .to(box.closest('.field') || box, { x: 6, duration: 0.06 })
+      .to(box.closest('.field') || box, { x: 0, duration: 0.06 });
+  }
+}
+function clearErr(id) { showErr(id, ''); }
+
+// ── GLOBAL ERROR ─────────────────────────────
+function showGlobalErr(panelPrefix, msg) {
+  const box = document.getElementById(panelPrefix + '-err');
+  const txt = document.getElementById(panelPrefix + '-err-text');
+  if (txt) txt.textContent = msg;
+  if (box) {
+    box.classList.toggle('show', !!msg);
+    if (msg) box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
+// ── RIPPLE ───────────────────────────────────
+function addRipple(e) {
+  const btn  = e.currentTarget;
+  const rect = btn.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height) * 2;
+  const x    = (e.clientX || rect.left + rect.width / 2) - rect.left - size / 2;
+  const y    = (e.clientY || rect.top + rect.height / 2) - rect.top - size / 2;
+  const el   = document.createElement('span');
+  el.className = 'ripple';
+  Object.assign(el.style, { width: size+'px', height: size+'px', left: x+'px', top: y+'px' });
+  btn.appendChild(el);
+  setTimeout(() => el.remove(), 700);
+}
+document.getElementById('login-btn').addEventListener('pointerdown', addRipple);
+document.getElementById('reg-btn').addEventListener('pointerdown', addRipple);
+
+// ── TOAST ────────────────────────────────────
+function toast(msg, type = '', dur = 3000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + type;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.className = '', dur);
+}
+
+// ── RESET PASSWORD ───────────────────────────
+async function resetPassword() {
+  const email = document.getElementById('l-email').value.trim();
+  if (!email) { showErr('l-err', 'Enter your email first, then tap Forgot Password'); return; }
+  try {
+    await auth.sendPasswordResetEmail(email);
+    toast('Reset link sent to ' + email, 'success');
+  } catch(e) {
+    toast('Could not send reset email. Check the address.', 'error');
+  }
+}
+
+// ═══════════════════════════════════════════════
+// HANDLE LOGIN
+// ═══════════════════════════════════════════════
+async function handleLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById('l-email').value.trim();
+  const pw    = document.getElementById('l-pw').value;
+
+  clearErr('l-err');
+  if (!email) { showErr('l-err', 'Please enter your email address'); return; }
+  if (!pw)    { showErr('l-err', 'Please enter your password'); return; }
+
+  const btn = document.getElementById('login-btn');
+  btn.classList.add('loading'); btn.disabled = true;
+
+  try {
+    const cred = await auth.signInWithEmailAndPassword(email, pw);
+    const snap = await db.collection('students').doc(cred.user.uid).get();
+    const profile = snap.exists
+      ? { uid: cred.user.uid, email: cred.user.email, ...snap.data() }
+      : { uid: cred.user.uid, email: cred.user.email, fullName: cred.user.displayName };
+    setSession(profile);
+    toast('Welcome back!', 'success', 1000);
+    setTimeout(() => {
+      if (typeof gsap !== 'undefined') {
+        gsap.to(document.body, { opacity: 0, duration: 0.2, onComplete: () => { window.location.href = 'home.html'; }});
+      } else {
+        window.location.href = 'home.html';
+      }
+    }, 600);
+  } catch(err) {
+    btn.classList.remove('loading'); btn.disabled = false;
+    const msgs = {
+      'auth/invalid-credential':    'Email or password is incorrect',
+      'auth/user-not-found':        'No account found for this email',
+      'auth/wrong-password':        'Incorrect password. Try again or reset it',
+      'auth/too-many-requests':     'Too many failed attempts. Please wait and try again',
+      'auth/network-request-failed':'No internet connection. Check your network',
+      'auth/invalid-email':         'This email address is not valid',
+    };
+    showGlobalErr('l', msgs[err.code] || 'Login failed. Please try again.');
+  }
+}
+
+// ═══════════════════════════════════════════════
+// HANDLE REGISTER
+// ═══════════════════════════════════════════════
+async function handleRegister(e) {
+  e.preventDefault();
+
+  // Collect values
+  const name  = document.getElementById('r-name').value.trim();
+  const mat   = document.getElementById('r-mat').value.trim().toUpperCase();
+  const email = document.getElementById('r-email').value.trim();
+  const pw    = document.getElementById('r-pw').value;
+  const level = document.getElementById('r-level').value;
+
+  // Institution
+  const instSel = document.getElementById('r-inst').value;
+  const institution = instSel === 'others'
+    ? document.getElementById('r-inst-custom').value.trim()
+    : instSel;
+
+  // Faculty
+  const facultySel = document.getElementById('r-faculty').value;
+  const faculty = facultySel === 'others'
+    ? document.getElementById('r-faculty-custom').value.trim()
+    : facultySel;
+
+  // Department
+  const deptSel = document.getElementById('r-dept').value;
+  const department = deptSel === 'others'
+    ? document.getElementById('r-dept-custom').value.trim()
+    : deptSel;
+
+  // Clear all errors
+  ['err-name','err-mat','err-inst','err-faculty','err-dept','err-email','err-pw','err-level']
+    .forEach(id => clearErr(id));
+  showGlobalErr('r', '');
+
+  // ── VALIDATION ─────────────────────────────
+  let valid = true;
+  if (!name || name.length < 2) {
+    showErr('err-name', 'Please enter your full name');
+    valid = false;
+  }
+  if (!mat) {
+    showErr('err-mat', 'Matriculation number is required');
+    valid = false;
+  }
+  if (!institution) {
+    showErr('err-inst', 'Please select or type your institution');
+    valid = false;
+  }
+  if (!faculty) {
+    showErr('err-faculty', 'Please select or type your faculty');
+    valid = false;
+  }
+  if (!department) {
+    showErr('err-dept', 'Please select or type your department');
+    valid = false;
+  }
+  if (!level) {
+    document.getElementById('err-level').classList.add('show');
+    document.getElementById('level-grid').scrollIntoView({ behavior:'smooth', block:'center' });
+    valid = false;
+  }
+  if (!email || !email.includes('@') || !email.includes('.')) {
+    showErr('err-email', 'Please enter a valid email address');
+    valid = false;
+  }
+  if (!pw || pw.length < 6) {
+    showErr('err-pw', 'Password must be at least 6 characters');
+    valid = false;
+  }
+
+  if (!valid) return;
+
+  // ── SUBMIT ──────────────────────────────────
+  const btn = document.getElementById('reg-btn');
+  btn.classList.add('loading'); btn.disabled = true;
+
+  try {
+    // Create Firebase Auth account
+    const cred = await auth.createUserWithEmailAndPassword(email, pw);
+    await cred.user.updateProfile({ displayName: name });
+
+    // Build Firestore profile document
+    const profile = {
+      uid:         cred.user.uid,
+      fullName:    name,
+      matNumber:   mat,
+      institution,
+      faculty,
+      department,
+      level:       parseInt(level),
+      email,
+      role:        'student',
+      plan:        'free',
+      totalPaid:   0,
+      streak:      0,
+      aiMessages:  0,
+      badges:      [],
+      createdAt:   firebase.firestore.FieldValue.serverTimestamp(),
+    };
+
+    // Save to Firestore
+    await db.collection('students').doc(cred.user.uid).set(profile);
+
+    // Also save a lightweight index for searching by institution/faculty/dept
+    await db.collection('student_index').doc(cred.user.uid).set({
+      fullName:   name,
+      matNumber:  mat,
+      institution,
+      faculty,
+      department,
+      level:      parseInt(level),
+      uid:        cred.user.uid,
+    });
+
+    // Save session
+    setSession(profile);
+
+    toast('Account created successfully!', 'success', 1200);
+    setTimeout(() => {
+      if (typeof gsap !== 'undefined') {
+        gsap.to(document.body, { opacity: 0, duration: 0.22, onComplete: () => { window.location.href = 'home.html'; }});
+      } else {
+        window.location.href = 'home.html';
+      }
+    }, 800);
+
+  } catch(err) {
+    btn.classList.remove('loading'); btn.disabled = false;
+    const msgs = {
+      'auth/email-already-in-use':    'An account already exists for this email. Try signing in.',
+      'auth/weak-password':           'Password is too weak. Use at least 6 characters.',
+      'auth/invalid-email':           'This email address is not valid.',
+      'auth/network-request-failed':  'No internet connection. Check your network and try again.',
+      'auth/operation-not-allowed':   'Email accounts are not enabled. Contact support.',
+    };
+    showGlobalErr('r', msgs[err.code] || 'Registration failed: ' + err.message);
+  }
+}
+
+// ── ENTRANCE ANIMATION ───────────────────────
+window.addEventListener('load', () => {
+  if (typeof gsap === 'undefined') {
+    document.body.style.opacity = '1';
+    return;
+  }
+  gsap.fromTo(document.body,
+    { opacity: 0 },
+    { opacity: 1, duration: 0.35, ease: 'power2.out' }
+  );
+  gsap.fromTo('#hero',
+    { opacity: 0, y: -24 },
+    { opacity: 1, y: 0, duration: 0.55, ease: 'back.out(1.5)', delay: 0.1 }
+  );
+  gsap.fromTo('#auth-card',
+    { opacity: 0, y: 40 },
+    { opacity: 1, y: 0, duration: 0.6, ease: 'power3.out', delay: 0.2 }
+  );
+});
+</script>
+</body>
+</html>
