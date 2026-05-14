@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+you<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -834,15 +834,10 @@
 </div><!-- end card -->
 
 <script>
-// ── FIREBASE CONFIG ─────────────────────────
-const SCHOLA_CONFIG = {
-
-  // ── FIREBASE ──────────────────────────────
-  // Get from: console.firebase.google.com
-  // Project Settings > Your apps > SDK setup
-  firebase: {
-     apiKey: "AIzaSyBQdowvGo5NHnWTZSzjqOpHA8AoQdHJPbw",
-   authDomain: "schola-34cc1.firebaseapp.com",
+  // ── FIREBASE CONFIG ─────────────────────────
+  const SCHOLA_CONFIG = {
+    apiKey: "AIzaSyBQdowvGo5NHnWTZSzjqOpHA8AoQdHJPbw",
+    authDomain: "schola-34cc1.firebaseapp.com",
     projectId: "schola-34cc1",
     storageBucket: "schola-34cc1.firebasestorage.app",
     messagingSenderId: "490891385758",
@@ -850,31 +845,43 @@ const SCHOLA_CONFIG = {
     measurementId: "G-P8Q8PCCDYX"
   };
 
-try {
-  firebase.initializeApp(FIREBASE_CONFIG);
-} catch(e) {
-  console.warn('Firebase init:', e.message);
-}
+  // ── INITIALIZE FIREBASE ─────────────────────
+  try {
+    firebase.initializeApp(SCHOLA_CONFIG);
+  } catch (e) {
+    console.warn("Firebase init:", e.message);
+  }
 
-const auth = firebase.auth();
-const db   = firebase.firestore();
+  const auth = firebase.auth();
+  const db = firebase.firestore();
 
-// ── SESSION ─────────────────────────────────
-function getSession() {
-  try { return JSON.parse(localStorage.getItem('schola_user')); }
-  catch { return null; }
-}
-function setSession(data) {
-  try { localStorage.setItem('schola_user', JSON.stringify(data)); }
-  catch(e) {}
-}
+  // ── SESSION ─────────────────────────────────
+  function getSession() {
+    try {
+      return JSON.parse(localStorage.getItem("schola_user"));
+    } catch {
+      return null;
+    }
+  }
 
-// Redirect if logged in
-if (getSession()) window.location.href = 'home.html';
+  function setSession(data) {
+    try {
+      localStorage.setItem("schola_user", JSON.stringify(data));
+    } catch (e) {}
+  }
 
-// Check URL param
-const urlMode = new URLSearchParams(window.location.search).get('mode');
-if (urlMode === 'register') switchTab('register');
+  // Redirect if logged in
+  if (getSession()) {
+    window.location.href = "home.html";
+  }
+
+  // Check URL param
+  const urlMode = new URLSearchParams(window.location.search).get("mode");
+
+  if (urlMode === "register") {
+    switchTab("register");
+  }
+</script>
 
 // ── SCHOOL DATA ──────────────────────────────
 // Institution → Faculty → Departments
