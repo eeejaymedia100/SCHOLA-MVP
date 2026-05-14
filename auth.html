@@ -1,4 +1,4 @@
-you<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -733,7 +733,8 @@ you<!DOCTYPE html>
       </div>
 
     </div><!-- end academic section -->
-<!-- ACCOUNT CREDENTIALS SECTION -->
+
+    <!-- ACCOUNT CREDENTIALS SECTION -->
     <div class="form-section">
       <div class="section-label">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -834,54 +835,43 @@ you<!DOCTYPE html>
 </div><!-- end card -->
 
 <script>
-  // ── FIREBASE CONFIG ─────────────────────────
-  const SCHOLA_CONFIG = {
-    apiKey: "AIzaSyBQdowvGo5NHnWTZSzjqOpHA8AoQdHJPbw",
-    authDomain: "schola-34cc1.firebaseapp.com",
-    projectId: "schola-34cc1",
-    storageBucket: "schola-34cc1.firebasestorage.app",
-    messagingSenderId: "490891385758",
-    appId: "1:490891385758:web:30f5059bbd4c890c6a548f",
-    measurementId: "G-P8Q8PCCDYX"
-  };
+// ── FIREBASE CONFIG ─────────────────────────
+// Replace with your real Firebase config
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyBQdowvGo5NHnWTZSzjqOpHA8AoQdHJPbw",
+  authDomain:        "schola-34cc1.firebaseapp.com",
+  projectId:         "schola-34cc1",
+  storageBucket:     "schola-34cc1.appspot.com",
+  messagingSenderId: "490891385758",
+  appId:             "1:490891385758:web:30f5059bbd4c890c6a548f"
+};
 
-  // ── INITIALIZE FIREBASE ─────────────────────
-  try {
-    firebase.initializeApp(SCHOLA_CONFIG);
-  } catch (e) {
-    console.warn("Firebase init:", e.message);
-  }
+try {
+  firebase.initializeApp(FIREBASE_CONFIG);
+} catch(e) {
+  console.warn('Firebase init:', e.message);
+}
 
-  const auth = firebase.auth();
-  const db = firebase.firestore();
+const auth = firebase.auth();
+const db   = firebase.firestore();
 
-  // ── SESSION ─────────────────────────────────
-  function getSession() {
-    try {
-      return JSON.parse(localStorage.getItem("schola_user"));
-    } catch {
-      return null;
-    }
-  }
+// ── SESSION ─────────────────────────────────
+function getSession() {
+  try { return JSON.parse(localStorage.getItem('schola_user')); }
+  catch { return null; }
+}
+function setSession(data) {
+  try { localStorage.setItem('schola_user', JSON.stringify(data)); }
+  catch(e) {}
+}
 
-  function setSession(data) {
-    try {
-      localStorage.setItem("schola_user", JSON.stringify(data));
-    } catch (e) {}
-  }
+// Redirect if logged in
+if (getSession()) window.location.href = 'home.html';
 
-  // Redirect if logged in
-  if (getSession()) {
-    window.location.href = "home.html";
-  }
+// Check URL param
+const urlMode = new URLSearchParams(window.location.search).get('mode');
+if (urlMode === 'register') switchTab('register');
 
-  // Check URL param
-  const urlMode = new URLSearchParams(window.location.search).get("mode");
-
-  if (urlMode === "register") {
-    switchTab("register");
-  }
-</script>
 
 // ── SCHOOL DATA ──────────────────────────────
 // Institution → Faculty → Departments
@@ -975,8 +965,8 @@ const SCHOOL_DATA = {
       "Political Science",
       "Psychology",
       "Sociology"
-    ],
-},
+    ]
+  },
   "University of Lagos (UNILAG)": {
     "Faculty of Arts": [
       "Arabic and Islamic Studies","Creative Arts","English",
@@ -1023,7 +1013,7 @@ const SCHOOL_DATA = {
       "Agricultural Economics, Management and Extension","Animal Science",
       "Crop Science","Food Science and Technology","Soil Science and Land Resources Management"
     ],
-    "Faculty of Arts": [
+"Faculty of Arts": [
       "English and Literary Studies","Fine and Applied Arts",
       "History and International Studies","Linguistics, Igbo and Other Nigerian Languages",
       "Music","Philosophy and Religion","Theatre and Film Studies"
@@ -1113,7 +1103,7 @@ const SCHOOL_DATA = {
       "Economics","Mass Communication","Psychology","Sociology"
     ]
   },
-"Obafemi Awolowo University (OAU), Ile-Ife": {
+  "Obafemi Awolowo University (OAU), Ile-Ife": {
     "Faculty of Administration": [
       "Accounting","Finance","Management and Accounting","Public Administration"
     ],
@@ -1283,7 +1273,8 @@ const SCHOOL_DATA = {
       "Architecture","Biochemistry","Biology","Building Technology","Chemistry",
       "Computer and Information Sciences","Estate Management","Industrial Mathematics",
       "Microbiology","Physics","Quantity Surveying","Statistics"
-    ]},
+    ]
+  },
   "Nnamdi Azikiwe University (NAU), Awka": {
     "Faculty of Agriculture": [
       "Agricultural Economics and Extension","Animal Science and Technology",
@@ -1450,7 +1441,7 @@ const SCHOOL_DATA = {
       "Medicine and Surgery","Dentistry","Nursing","Medical Laboratory Science","Physiotherapy","Radiography"
     ]
   },
-"Ambrose Alli University (AAU), Ekpoma": {
+  "Ambrose Alli University (AAU), Ekpoma": {
     "Faculty of Agriculture": [
       "Agricultural Economics and Extension","Animal Science","Crop Science","Fisheries","Soil Science"
     ],
@@ -1725,8 +1716,7 @@ function showErr(id, msg) {
   }
 }
 function clearErr(id) { showErr(id, ''); }
-
-// ── GLOBAL ERROR ─────────────────────────────
+  // ── GLOBAL ERROR ─────────────────────────────
 function showGlobalErr(panelPrefix, msg) {
   const box = document.getElementById(panelPrefix + '-err');
   const txt = document.getElementById(panelPrefix + '-err-text');
