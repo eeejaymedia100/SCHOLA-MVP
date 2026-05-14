@@ -835,15 +835,20 @@
 
 <script>
 // ── FIREBASE CONFIG ─────────────────────────
-// Replace with your real Firebase config
-const FIREBASE_CONFIG = {
-  apiKey:            "YOUR_FIREBASE_API_KEY",
-  authDomain:        "YOUR_PROJECT.firebaseapp.com",
-  projectId:         "YOUR_PROJECT_ID",
-  storageBucket:     "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId:             "YOUR_APP_ID"
-};
+const SCHOLA_CONFIG = {
+
+  // ── FIREBASE ──────────────────────────────
+  // Get from: console.firebase.google.com
+  // Project Settings > Your apps > SDK setup
+  firebase: {
+     apiKey: "AIzaSyBQdowvGo5NHnWTZSzjqOpHA8AoQdHJPbw",
+   authDomain: "schola-34cc1.firebaseapp.com",
+    projectId: "schola-34cc1",
+    storageBucket: "schola-34cc1.firebasestorage.app",
+    messagingSenderId: "490891385758",
+    appId: "1:490891385758:web:30f5059bbd4c890c6a548f",
+    measurementId: "G-P8Q8PCCDYX"
+  };
 
 try {
   firebase.initializeApp(FIREBASE_CONFIG);
